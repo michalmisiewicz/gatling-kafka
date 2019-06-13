@@ -1,25 +1,19 @@
 package com.github.mnogu.gatling.kafka.action
 
 import com.github.mnogu.gatling.kafka.protocol.{KafkaComponents, KafkaProtocol}
-import com.github.mnogu.gatling.kafka.request.builder.KafkaAttributes
+import com.github.mnogu.gatling.kafka.request.builder.KafkaRequest
 import io.gatling.core.action.Action
 import io.gatling.core.action.builder.ActionBuilder
 import io.gatling.core.structure.ScenarioContext
 import org.apache.kafka.clients.producer.KafkaProducer
 
-import scala.collection.JavaConverters._
 
-
-class KafkaRequestActionBuilder[K,V](kafkaAttributes: KafkaAttributes[K,V]) extends ActionBuilder {
+class KafkaRequestActionBuilder[K,V](producer: KafkaProducer[K, V], kafkaAttributes: KafkaRequest[K,V]) extends ActionBuilder {
 
   override def build( ctx: ScenarioContext, next: Action ): Action = {
-    import ctx.{protocolComponentsRegistry, coreComponents, throttled}
+    import ctx.{coreComponents, protocolComponentsRegistry, throttled}
 
     val kafkaComponents: KafkaComponents = protocolComponentsRegistry.components(KafkaProtocol.KafkaProtocolKey)
-
-    val producer = new KafkaProducer[K,V]( kafkaComponents.kafkaProtocol.properties.asJava )
-
-    coreComponents.actorSystem.registerOnTermination(producer.close())
 
     new KafkaRequestAction(
       producer,
